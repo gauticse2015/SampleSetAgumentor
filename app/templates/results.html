@@ -1,27 +1,56 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2>Generated Images</h2>
-    <a href="{{ url_for('main.index') }}" class="btn btn-primary">Process More Images</a>
-</div>
+<form action="{{ url_for('main.download_images') }}" method="post">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Generated Images</h2>
+        <div>
+            <a href="{{ url_for('main.index') }}" class="btn btn-secondary me-2">Process More Images</a>
+            <button type="submit" class="btn btn-primary">Download Selected</button>
+        </div>
+    </div>
 
-{% if images %}
-<div class="row row-cols-1 row-cols-md-3 g-4">
-    {% for image in images %}
-    <div class="col">
-        <div class="card h-100">
-            <img src="{{ url_for('main.generated_file', filename=image) }}" class="card-img-top" alt="{{ image }}">
-            <div class="card-body">
-                <p class="card-text text-center text-muted small">{{ image }}</p>
+    {% if images %}
+    <div class="row mb-3">
+        <div class="col">
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="selectAll">
+                <label class="form-check-label" for="selectAll">Select All</label>
             </div>
         </div>
     </div>
-    {% endfor %}
-</div>
-{% else %}
-<div class="alert alert-info">
-    No images generated yet.
-</div>
-{% endif %}
+
+    <div class="row row-cols-1 row-cols-md-3 g-4">
+        {% for image in images %}
+        <div class="col">
+            <div class="card h-100">
+                <div class="card-header">
+                    <div class="form-check">
+                        <input class="form-check-input image-checkbox" type="checkbox" name="selected_images" value="{{ image }}" id="check_{{ loop.index }}">
+                        <label class="form-check-label" for="check_{{ loop.index }}">Select</label>
+                    </div>
+                </div>
+                <img src="{{ url_for('main.generated_file', filename=image) }}" class="card-img-top" alt="{{ image }}">
+                <div class="card-body">
+                    <p class="card-text text-center text-muted small">{{ image }}</p>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        No images generated yet.
+    </div>
+    {% endif %}
+</form>
+
+<script>
+document.getElementById('selectAll').addEventListener('change', function() {
+    var checkboxes = document.getElementsByClassName('image-checkbox');
+    for(var i = 0; i < checkboxes.length; i++) {
+        checkboxes[i].checked = this.checked;
+    }
+});
+</script>
 {% endblock %}

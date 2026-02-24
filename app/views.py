@@ -1,5 +1,7 @@
 import os
-from flask import Blueprint, render_template, request, flash, redirect, url_for, current_app, send_from_directory
+import zipfile
+import io
+from flask import Blueprint, render_template, request, flash, redirect, url_for, current_app, send_from_directory, send_file
 from werkzeug.utils import secure_filename
 from .utils.augmentor import ImageAugmentor
 
@@ -84,3 +86,29 @@ def results():
 @main_bp.route('/generated/<filename>')
 def generated_file(filename):
     return send_from_directory(current_app.config['OUTPUT_FOLDER'], filename)
+
+@main_bp.route('/download', methods=['POST'])
+def download_images():
+    selected_images = request.form.getlist('selected_images')
+    
+    if not selected_images:
+        flash('No images selected for download', 'error')
+        return redirect(url_for('main.results'))
+        
+    output_path = current_app.config['OUTPUT_FOLDER']
+    memory_file = io.BytesIO()
+    
+    with zipfile.ZipFile(memory_file, 'w', zipfile.ZIP_DEFLATED) as zf:
+        for image_name in selected_images:
+            file_path = os.path.join(output_path, image_name)
+            if os.path.exists(file_path):
+                zf.write(file_path, image_name)
+                
+    memory_file.seek(0)
+    
+    return send_file(
+        memory_file,
+        mimetype='application/zip',
+        as_attachment=True,
+        download_name='augmented_images.zip'
+    )
