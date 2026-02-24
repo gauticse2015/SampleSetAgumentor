@@ -14,52 +14,82 @@ def allowed_file(filename):
 @main_bp.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
-        # Check if the post request has the file part
-        if 'files[]' not in request.files:
-            flash('No file part')
-            return redirect(request.url)
-            
-        files = request.files.getlist('files[]')
-        
-        # If user does not select file, browser also
-        # submit an empty part without filename
-        if not files or files[0].filename == '':
-            flash('No selected file')
-            return redirect(request.url)
-            
+        input_mode = request.form.get('input_mode', 'files')
         operations = request.form.getlist('operations')
+        
         if not operations:
             flash('No augmentation operations selected')
             return redirect(request.url)
-
-        # Clear previous uploads
-        upload_path = current_app.config['UPLOAD_FOLDER']
-        if not os.path.exists(upload_path):
-            os.makedirs(upload_path)
-            
-        for f in os.listdir(upload_path):
-            os.remove(os.path.join(upload_path, f))
-            
-        # Save uploaded files
-        saved_files = []
-        for file in files:
-            if file and allowed_file(file.filename):
-                filename = secure_filename(file.filename)
-                file.save(os.path.join(upload_path, filename))
-                saved_files.append(filename)
-                
-        if not saved_files:
-            flash('No valid images uploaded')
-            return redirect(request.url)
-
+        
         # Process images - append to existing output folder instead of clearing
         output_path = current_app.config['OUTPUT_FOLDER']
-        # Create output directory if it doesn't exist, but don't clear existing files
         if not os.path.exists(output_path):
             os.makedirs(output_path)
         
-        augmentor = ImageAugmentor(upload_path, output_path)
-        count, generated_files, errors = augmentor.process_images(operations)
+        if input_mode == 'folder':
+            # Handle folder path input
+            input_folder_path = request.form.get('input_folder_path', '').strip()
+            
+            if not input_folder_path:
+                flash('No input folder path provided')
+                return redirect(request.url)
+            
+            # Expand user home directory if path starts with ~
+            input_folder_path = os.path.expanduser(input_folder_path)
+            
+            # Convert to absolute path if relative
+            if not os.path.isabs(input_folder_path):
+                input_folder_path = os.path.abspath(input_folder_path)
+            
+            if not os.path.exists(input_folder_path):
+                flash(f'Input folder does not exist: {input_folder_path}')
+                return redirect(request.url)
+            
+            if not os.path.isdir(input_folder_path):
+                flash(f'Path is not a directory: {input_folder_path}')
+                return redirect(request.url)
+            
+            # Process images from folder
+            augmentor = ImageAugmentor(input_folder_path, output_path)
+            count, generated_files, errors = augmentor.process_images(operations)
+            
+        else:
+            # Handle file upload mode
+            # Check if the post request has the file part
+            if 'files[]' not in request.files:
+                flash('No file part')
+                return redirect(request.url)
+                
+            files = request.files.getlist('files[]')
+            
+            # If user does not select file, browser also
+            # submit an empty part without filename
+            if not files or files[0].filename == '':
+                flash('No selected file')
+                return redirect(request.url)
+
+            # Clear previous uploads
+            upload_path = current_app.config['UPLOAD_FOLDER']
+            if not os.path.exists(upload_path):
+                os.makedirs(upload_path)
+                
+            for f in os.listdir(upload_path):
+                os.remove(os.path.join(upload_path, f))
+                
+            # Save uploaded files
+            saved_files = []
+            for file in files:
+                if file and allowed_file(file.filename):
+                    filename = secure_filename(file.filename)
+                    file.save(os.path.join(upload_path, filename))
+                    saved_files.append(filename)
+                    
+            if not saved_files:
+                flash('No valid images uploaded')
+                return redirect(request.url)
+            
+            augmentor = ImageAugmentor(upload_path, output_path)
+            count, generated_files, errors = augmentor.process_images(operations)
         
         # Store generated filenames in session
         session['generated_files'] = generated_files

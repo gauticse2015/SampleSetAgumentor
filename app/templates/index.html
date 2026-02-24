@@ -9,10 +9,36 @@
             </div>
             <div class="card-body">
                 <form action="{{ url_for('main.index') }}" method="post" enctype="multipart/form-data">
+                    
+                    <!-- Input Mode Selection -->
                     <div class="mb-4">
+                        <label class="form-label">Input Source</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="input_mode" value="files" id="mode_files" checked onchange="toggleInputMode()">
+                            <label class="form-check-label" for="mode_files">Select Individual Images</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="input_mode" value="folder" id="mode_folder" onchange="toggleInputMode()">
+                            <label class="form-check-label" for="mode_folder">Select Input Folder</label>
+                        </div>
+                    </div>
+
+                    <!-- File Upload Section -->
+                    <div id="file_input_section" class="mb-4">
                         <label for="files" class="form-label">Select Images</label>
-                        <input type="file" class="form-control" id="files" name="files[]" multiple accept=".png,.jpg,.jpeg,.bmp" required>
+                        <input type="file" class="form-control" id="files" name="files[]" multiple accept=".png,.jpg,.jpeg,.bmp">
                         <div class="form-text">Supported formats: PNG, JPG, JPEG, BMP</div>
+                    </div>
+
+                    <!-- Folder Path Section -->
+                    <div id="folder_input_section" class="mb-4" style="display: none;">
+                        <label for="input_folder_path" class="form-label">Input Folder Path</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="input_folder_path" name="input_folder_path" 
+                                   placeholder="/path/to/input/folder">
+                            <button type="button" class="btn btn-outline-secondary" id="browseInputBtn">Browse...</button>
+                        </div>
+                        <div class="form-text">Enter the path to a folder containing images, or click Browse to select a folder.</div>
                     </div>
 
                     <div class="mb-4">
@@ -51,4 +77,44 @@
         </div>
     </div>
 </div>
+
+<script>
+function toggleInputMode() {
+    var modeFiles = document.getElementById('mode_files').checked;
+    var fileSection = document.getElementById('file_input_section');
+    var folderSection = document.getElementById('folder_input_section');
+    var filesInput = document.getElementById('files');
+    var folderInput = document.getElementById('input_folder_path');
+    
+    if (modeFiles) {
+        fileSection.style.display = 'block';
+        folderSection.style.display = 'none';
+        filesInput.setAttribute('required', 'required');
+        folderInput.removeAttribute('required');
+    } else {
+        fileSection.style.display = 'none';
+        folderSection.style.display = 'block';
+        filesInput.removeAttribute('required');
+        folderInput.setAttribute('required', 'required');
+    }
+}
+
+// Initialize on page load
+toggleInputMode();
+
+// Folder browser for input path
+document.getElementById('browseInputBtn').addEventListener('click', async function() {
+    try {
+        if ('showDirectoryPicker' in window) {
+            const dirHandle = await window.showDirectoryPicker();
+            document.getElementById('input_folder_path').value = dirHandle.name;
+            window.selectedInputDirectoryHandle = dirHandle;
+        } else {
+            alert('Your browser does not support folder selection. Please type the folder path manually.');
+        }
+    } catch (err) {
+        console.error('Error selecting directory:', err);
+    }
+});
+</script>
 {% endblock %}
