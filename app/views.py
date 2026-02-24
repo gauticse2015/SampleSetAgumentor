@@ -27,30 +27,39 @@ def index():
             os.makedirs(output_path)
         
         if input_mode == 'folder':
-            # Handle folder path input
-            input_folder_path = request.form.get('input_folder_path', '').strip()
+            # Handle folder upload mode
+            if 'folder_files[]' not in request.files:
+                flash('No folder files part')
+                return redirect(request.url)
+                
+            files = request.files.getlist('folder_files[]')
             
-            if not input_folder_path:
-                flash('No input folder path provided')
+            if not files or files[0].filename == '':
+                flash('No files selected in folder')
+                return redirect(request.url)
+
+            # Clear previous uploads
+            upload_path = current_app.config['UPLOAD_FOLDER']
+            if not os.path.exists(upload_path):
+                os.makedirs(upload_path)
+                
+            for f in os.listdir(upload_path):
+                os.remove(os.path.join(upload_path, f))
+                
+            # Save uploaded files
+            saved_files = []
+            for file in files:
+                if file and allowed_file(file.filename):
+                    filename = secure_filename(os.path.basename(file.filename))
+                    file.save(os.path.join(upload_path, filename))
+                    saved_files.append(filename)
+                    
+            if not saved_files:
+                flash('No valid images found in the uploaded folder')
                 return redirect(request.url)
             
-            # Expand user home directory if path starts with ~
-            input_folder_path = os.path.expanduser(input_folder_path)
-            
-            # Convert to absolute path if relative
-            if not os.path.isabs(input_folder_path):
-                input_folder_path = os.path.abspath(input_folder_path)
-            
-            if not os.path.exists(input_folder_path):
-                flash(f'Input folder does not exist: {input_folder_path}')
-                return redirect(request.url)
-            
-            if not os.path.isdir(input_folder_path):
-                flash(f'Path is not a directory: {input_folder_path}')
-                return redirect(request.url)
-            
-            # Process images from folder
-            augmentor = ImageAugmentor(input_folder_path, output_path)
+            # Process images from upload folder (same as single file mode now)
+            augmentor = ImageAugmentor(upload_path, output_path)
             count, generated_files, errors = augmentor.process_images(operations)
             
         else:

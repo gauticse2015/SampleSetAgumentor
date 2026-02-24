@@ -32,13 +32,9 @@
 
                     <!-- Folder Path Section -->
                     <div id="folder_input_section" class="mb-4" style="display: none;">
-                        <label for="input_folder_path" class="form-label">Input Folder Path</label>
-                        <div class="input-group">
-                            <input type="text" class="form-control" id="input_folder_path" name="input_folder_path" 
-                                   placeholder="/path/to/input/folder">
-                            <button type="button" class="btn btn-outline-secondary" id="browseInputBtn">Browse...</button>
-                        </div>
-                        <div class="form-text">Enter the path to a folder containing images, or click Browse to select a folder.</div>
+                        <label for="folder_files" class="form-label">Select Input Folder</label>
+                        <input type="file" class="form-control" id="folder_files" name="folder_files[]" multiple webkitdirectory directory>
+                        <div class="form-text">Select a folder containing images to upload and process.</div>
                     </div>
 
                     <div class="mb-4">
@@ -84,7 +80,7 @@ function toggleInputMode() {
     var fileSection = document.getElementById('file_input_section');
     var folderSection = document.getElementById('folder_input_section');
     var filesInput = document.getElementById('files');
-    var folderInput = document.getElementById('input_folder_path');
+    var folderInput = document.getElementById('folder_files');
     
     if (modeFiles) {
         fileSection.style.display = 'block';
@@ -101,20 +97,5 @@ function toggleInputMode() {
 
 // Initialize on page load
 toggleInputMode();
-
-// Folder browser for input path
-document.getElementById('browseInputBtn').addEventListener('click', async function() {
-    try {
-        if ('showDirectoryPicker' in window) {
-            const dirHandle = await window.showDirectoryPicker();
-            document.getElementById('input_folder_path').value = dirHandle.name;
-            window.selectedInputDirectoryHandle = dirHandle;
-        } else {
-            alert('Your browser does not support folder selection. Please type the folder path manually.');
-        }
-    } catch (err) {
-        console.error('Error selecting directory:', err);
-    }
-});
 </script>
 {% endblock %}
