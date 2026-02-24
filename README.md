@@ -12,7 +12,7 @@ A Flask-based web application designed to generate augmented variations of image
     - **Blur**: Applies blurring filters.
     - **Grayscale**: Converts images to grayscale.
 - **Interactive Preview**: View generated images in a grid layout.
-- **Selective Download**: Select specific augmented images to download as a ZIP archive.
+- **Selective Save**: Select specific augmented images to save to a user-specified output folder.
 - **Responsive UI**: Built with Bootstrap 5 for a clean and modern interface.
 
 ## Project Structure
@@ -67,4 +67,4 @@ A Flask-based web application designed to generate augmented variations of image
 2.  **Select Augmentations**: Check the boxes for the augmentation types you want to apply (Rotate, Flip, Noise, etc.).
 3.  **Generate**: Click "Generate Augmented Images".
 4.  **Preview**: The application will process the images and display the results on the next page.
-5.  **Download**: Select the images you wish to keep and click the "Download Selected" button to get a ZIP file containing your new dataset.
+5.  **Save to Folder**: Enter the desired output folder path (absolute or relative), select the images you wish to keep, and click the "Save Selected to Folder" button. The images will be saved directly to the specified location.

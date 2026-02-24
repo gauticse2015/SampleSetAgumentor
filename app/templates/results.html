@@ -1,16 +1,30 @@
 {% extends "base.html" %}
 
 {% block content %}
-<form action="{{ url_for('main.download_images') }}" method="post">
+<form action="{{ url_for('main.save_images') }}" method="post">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>Generated Images</h2>
         <div>
             <a href="{{ url_for('main.index') }}" class="btn btn-secondary me-2">Process More Images</a>
-            <button type="submit" class="btn btn-primary">Download Selected</button>
+            <button type="submit" class="btn btn-primary">Save Selected to Folder</button>
         </div>
     </div>
 
     {% if images %}
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">Output Configuration</h5>
+        </div>
+        <div class="card-body">
+            <div class="mb-3">
+                <label for="output_path" class="form-label">Output Folder Path</label>
+                <input type="text" class="form-control" id="output_path" name="output_path" 
+                       placeholder="/path/to/output/folder" required>
+                <div class="form-text">Enter the absolute or relative path where selected images will be saved.</div>
+            </div>
+        </div>
+    </div>
+
     <div class="row mb-3">
         <div class="col">
             <div class="form-check">
