@@ -13,6 +13,7 @@ class ImageAugmentor:
 
     def process_images(self, operations):
         processed_count = 0
+        generated_files = []
         errors = []
         timestamp = int(time.time())
         
@@ -37,6 +38,7 @@ class ImageAugmentor:
                             save_name = f"{base_name}_aug_{timestamp}_{idx}.jpg"
                             save_path = os.path.join(self.output_path, save_name)
                             aug_img.save(save_path, 'JPEG')
+                            generated_files.append(save_name)
                             processed_count += 1
                             
                 except Exception as e:
@@ -45,7 +47,7 @@ class ImageAugmentor:
         except Exception as e:
             errors.append(f"System error: {str(e)}")
             
-        return processed_count, errors
+        return processed_count, generated_files, errors
 
     def _apply_augmentations(self, image, operations):
         augmented_results = []

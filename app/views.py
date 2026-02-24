@@ -1,7 +1,7 @@
 import os
 import zipfile
 import io
-from flask import Blueprint, render_template, request, flash, redirect, url_for, current_app, send_from_directory, send_file
+from flask import Blueprint, render_template, request, flash, redirect, url_for, current_app, send_from_directory, send_file, session
 from werkzeug.utils import secure_filename
 from .utils.augmentor import ImageAugmentor
 
@@ -59,7 +59,10 @@ def index():
             os.makedirs(output_path)
         
         augmentor = ImageAugmentor(upload_path, output_path)
-        count, errors = augmentor.process_images(operations)
+        count, generated_files, errors = augmentor.process_images(operations)
+        
+        # Store generated filenames in session
+        session['generated_files'] = generated_files
         
         if errors:
             for error in errors:
@@ -74,9 +77,17 @@ def index():
 def results():
     output_path = current_app.config['OUTPUT_FOLDER']
     images = []
+    
+    # Only get images that were just generated (from session)
+    generated_files = session.get('generated_files', [])
+    
     if os.path.exists(output_path):
-        images = [f for f in os.listdir(output_path) if f.lower().endswith(('.png', '.jpg', '.jpeg'))]
-        images.sort()
+        # Filter files that exist in output folder and were in the generated list
+        images = [f for f in generated_files if os.path.exists(os.path.join(output_path, f))]
+        
+        # Fallback: if session is empty (e.g. direct access), show nothing or maybe last batch?
+        # For now let's stick to showing only what's in session to solve the user's issue
+        
     return render_template('results.html', images=images)
 
 @main_bp.route('/generated/<filename>')
@@ -140,6 +151,6 @@ def save_images():
             flash(error, 'error')
     
     if saved_count > 0:
-        flash(f'Successfully saved {saved_count} images to {output_path}', 'success')
+        flash(f'Successfully saved {saved_count} images', 'success')
     
     return redirect(url_for('main.results'))
