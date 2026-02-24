@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="mb-0">Image Augmentation Configuration</h3>
+            </div>
+            <div class="card-body">
+                <form action="{{ url_for('main.index') }}" method="post" enctype="multipart/form-data">
+                    <div class="mb-4">
+                        <label for="files" class="form-label">Select Images</label>
+                        <input type="file" class="form-control" id="files" name="files[]" multiple accept=".png,.jpg,.jpeg,.bmp" required>
+                        <div class="form-text">Supported formats: PNG, JPG, JPEG, BMP</div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label">Augmentation Operations</label>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="operations" value="rotate" id="rotate">
+                                    <label class="form-check-label" for="rotate">Rotate (90°, 180°, 270°)</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="operations" value="flip" id="flip">
+                                    <label class="form-check-label" for="flip">Flip (Horizontal & Vertical)</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="operations" value="noise" id="noise">
+                                    <label class="form-check-label" for="noise">Add Gaussian Noise</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="operations" value="blur" id="blur">
+                                    <label class="form-check-label" for="blur">Blur</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="operations" value="grayscale" id="grayscale">
+                                    <label class="form-check-label" for="grayscale">Grayscale</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100">Generate Augmented Images</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
