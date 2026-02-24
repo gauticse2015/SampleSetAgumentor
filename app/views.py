@@ -52,15 +52,11 @@ def index():
             flash('No valid images uploaded')
             return redirect(request.url)
 
-        # Process images
+        # Process images - append to existing output folder instead of clearing
         output_path = current_app.config['OUTPUT_FOLDER']
-        # Clear previous outputs
+        # Create output directory if it doesn't exist, but don't clear existing files
         if not os.path.exists(output_path):
             os.makedirs(output_path)
-            
-        if os.path.exists(output_path):
-            for f in os.listdir(output_path):
-                os.remove(os.path.join(output_path, f))
         
         augmentor = ImageAugmentor(upload_path, output_path)
         count, errors = augmentor.process_images(operations)

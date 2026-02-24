@@ -1,4 +1,5 @@
 import os
+import time
 from PIL import Image, ImageFilter, ImageOps
 import numpy as np
 import random
@@ -13,6 +14,7 @@ class ImageAugmentor:
     def process_images(self, operations):
         processed_count = 0
         errors = []
+        timestamp = int(time.time())
         
         try:
             files = [f for f in os.listdir(self.input_path) 
@@ -29,10 +31,10 @@ class ImageAugmentor:
                         # Apply selected operations
                         augmented_images = self._apply_augmentations(img, operations)
                         
-                        # Save augmented images
+                        # Save augmented images with timestamp to avoid conflicts
                         base_name = os.path.splitext(filename)[0]
                         for idx, aug_img in enumerate(augmented_images):
-                            save_name = f"{base_name}_aug_{idx}.jpg"
+                            save_name = f"{base_name}_aug_{timestamp}_{idx}.jpg"
                             save_path = os.path.join(self.output_path, save_name)
                             aug_img.save(save_path, 'JPEG')
                             processed_count += 1
