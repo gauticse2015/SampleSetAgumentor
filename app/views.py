@@ -1,15 +1,75 @@
 import os
 import zipfile
 import io
+import time
 from flask import Blueprint, render_template, request, flash, redirect, url_for, current_app, send_from_directory, send_file, session
 from werkzeug.utils import secure_filename
 from .utils.augmentor import ImageAugmentor
+from .utils.text_augmentor import TextAugmentor
 
 main_bp = Blueprint('main', __name__)
 
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in current_app.config['ALLOWED_EXTENSIONS']
+
+@main_bp.route('/augment_text', methods=['POST'])
+def augment_text():
+    text = request.form.get('input_text')
+    operations = request.form.getlist('text_operations')
+    
+    if not text:
+        flash('No text provided')
+        return redirect(url_for('main.index'))
+        
+    if not operations:
+        flash('No text augmentation operations selected')
+        return redirect(url_for('main.index'))
+        
+    augmentor = TextAugmentor()
+    # We can add config extraction here if we add inputs for probabilities/counts later
+    config = {} 
+    
+    augmented_texts = augmentor.process_text(text, operations, config)
+    
+    output_path = current_app.config['OUTPUT_FOLDER']
+    if not os.path.exists(output_path):
+        os.makedirs(output_path)
+        
+    timestamp = int(time.time())
+    saved_files = []
+    
+    for i, item in enumerate(augmented_texts):
+        filename = f"text_aug_{timestamp}_{i}_{item['name'].replace(' ', '_').lower()}.txt"
+        filepath = os.path.join(output_path, filename)
+        with open(filepath, 'w') as f:
+            f.write(item['content'])
+        saved_files.append(filename)
+        
+    session['generated_text_files'] = saved_files
+    flash(f'Successfully generated {len(saved_files)} augmented text files!', 'success')
+    return redirect(url_for('main.text_results'))
+
+@main_bp.route('/text_results')
+def text_results():
+    output_path = current_app.config['OUTPUT_FOLDER']
+    files = []
+    generated_files = session.get('generated_text_files', [])
+    
+    if os.path.exists(output_path):
+        files = [f for f in generated_files if os.path.exists(os.path.join(output_path, f))]
+        
+    # Read content for preview
+    file_contents = []
+    for f in files:
+        try:
+            with open(os.path.join(output_path, f), 'r') as file:
+                content = file.read()
+                file_contents.append({'filename': f, 'content': content})
+        except:
+            pass
+            
+    return render_template('results.html', text_files=file_contents)
 
 @main_bp.route('/', methods=['GET', 'POST'])
 def index():
@@ -60,7 +120,18 @@ def index():
             
             # Process images from upload folder (same as single file mode now)
             augmentor = ImageAugmentor(upload_path, output_path)
-            count, generated_files, errors = augmentor.process_images(operations)
+            
+            # Extract configuration from form
+            config = {
+                'scale_up': request.form.get('scale_up', 20),
+                'scale_down': request.form.get('scale_down', 20),
+                'brightness_up': request.form.get('brightness_up', 30),
+                'brightness_down': request.form.get('brightness_down', 30),
+                'contrast_up': request.form.get('contrast_up', 30),
+                'contrast_down': request.form.get('contrast_down', 30)
+            }
+            
+            count, generated_files, errors = augmentor.process_images(operations, config)
             
         else:
             # Handle file upload mode
@@ -98,7 +169,18 @@ def index():
                 return redirect(request.url)
             
             augmentor = ImageAugmentor(upload_path, output_path)
-            count, generated_files, errors = augmentor.process_images(operations)
+            
+            # Extract configuration from form
+            config = {
+                'scale_up': request.form.get('scale_up', 20),
+                'scale_down': request.form.get('scale_down', 20),
+                'brightness_up': request.form.get('brightness_up', 30),
+                'brightness_down': request.form.get('brightness_down', 30),
+                'contrast_up': request.form.get('contrast_up', 30),
+                'contrast_down': request.form.get('contrast_down', 30)
+            }
+            
+            count, generated_files, errors = augmentor.process_images(operations, config)
         
         # Store generated filenames in session
         session['generated_files'] = generated_files

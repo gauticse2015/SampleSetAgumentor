@@ -3,14 +3,14 @@
 {% block content %}
 <form action="{{ url_for('main.save_images') }}" method="post">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>Generated Images</h2>
+        <h2>Generated Results</h2>
         <div>
-            <a href="{{ url_for('main.index') }}" class="btn btn-secondary me-2">Process More Images</a>
+            <a href="{{ url_for('main.index') }}" class="btn btn-secondary me-2">Process More</a>
             <button type="submit" class="btn btn-primary">Save Selected to Folder</button>
         </div>
     </div>
 
-    {% if images %}
+    {% if images or text_files %}
     <div class="card mb-4">
         <div class="card-header">
             <h5 class="mb-0">Output Configuration</h5>
@@ -23,7 +23,7 @@
                            placeholder="/path/to/output/folder" required>
                     <button type="button" class="btn btn-outline-secondary" id="browseBtn">Browse...</button>
                 </div>
-                <div class="form-text">Enter the absolute or relative path where selected images will be saved, or click Browse to select a folder.</div>
+                <div class="form-text">Enter the absolute or relative path where selected files will be saved, or click Browse to select a folder.</div>
             </div>
         </div>
     </div>
@@ -37,6 +37,7 @@
         </div>
     </div>
 
+    {% if images %}
     <div class="row row-cols-1 row-cols-md-3 g-4">
         {% for image in images %}
         <div class="col">
@@ -47,7 +48,9 @@
                         <label class="form-check-label" for="check_{{ loop.index }}">Select</label>
                     </div>
                 </div>
-                <img src="{{ url_for('main.generated_file', filename=image) }}" class="card-img-top" alt="{{ image }}">
+                <a href="#" onclick="showPreview('{{ url_for('main.generated_file', filename=image) }}', '{{ image }}'); return false;" title="Click to preview">
+                    <img src="{{ url_for('main.generated_file', filename=image) }}" class="card-img-top" alt="{{ image }}">
+                </a>
                 <div class="card-body">
                     <p class="card-text text-center text-muted small">{{ image }}</p>
                 </div>
@@ -55,14 +58,59 @@
         </div>
         {% endfor %}
     </div>
+    {% endif %}
+
+    {% if text_files %}
+    <div class="row row-cols-1 row-cols-md-2 g-4">
+        {% for file in text_files %}
+        <div class="col">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div class="form-check">
+                        <input class="form-check-input image-checkbox" type="checkbox" name="selected_images" value="{{ file.filename }}" id="check_text_{{ loop.index }}">
+                        <label class="form-check-label" for="check_text_{{ loop.index }}">Select</label>
+                    </div>
+                    <small class="text-muted text-truncate ms-2" title="{{ file.filename }}">{{ file.filename }}</small>
+                </div>
+                <div class="card-body">
+                    <pre class="bg-light p-3 border rounded mb-0" style="white-space: pre-wrap; max-height: 200px; overflow-y: auto; font-size: 0.9rem;">{{ file.content }}</pre>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
     {% else %}
     <div class="alert alert-info">
-        No images generated yet.
+        No results generated yet.
     </div>
     {% endif %}
 </form>
 
+<!-- Preview Modal -->
+<div class="modal fade" id="previewModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="previewTitle">Image Preview</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center bg-light">
+                <img src="" id="previewImage" class="img-fluid" alt="Preview" style="max-height: 80vh;">
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
+function showPreview(src, title) {
+    document.getElementById('previewImage').src = src;
+    document.getElementById('previewTitle').textContent = title;
+    var myModal = new bootstrap.Modal(document.getElementById('previewModal'));
+    myModal.show();
+}
+
 document.getElementById('selectAll').addEventListener('change', function() {
     var checkboxes = document.getElementsByClassName('image-checkbox');
     for(var i = 0; i < checkboxes.length; i++) {

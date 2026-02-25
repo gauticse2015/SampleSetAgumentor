@@ -8,67 +8,185 @@
                 <h3 class="mb-0">Image Augmentation Configuration</h3>
             </div>
             <div class="card-body">
-                <form action="{{ url_for('main.index') }}" method="post" enctype="multipart/form-data">
+                <ul class="nav nav-tabs mb-4" id="augmentationTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="image-tab" data-bs-toggle="tab" data-bs-target="#image-content" type="button" role="tab" aria-controls="image-content" aria-selected="true">Image Augmentation</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="text-tab" data-bs-toggle="tab" data-bs-target="#text-content" type="button" role="tab" aria-controls="text-content" aria-selected="false">Text Augmentation</button>
+                    </li>
+                </ul>
+                
+                <div class="tab-content" id="augmentationTabsContent">
+                    <div class="tab-pane fade show active" id="image-content" role="tabpanel" aria-labelledby="image-tab">
+                        <form action="{{ url_for('main.index') }}" method="post" enctype="multipart/form-data">
+                            
+                            <!-- Input Mode Selection -->
+                            <div class="mb-4">
+                                <label class="form-label">Input Source</label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="input_mode" value="files" id="mode_files" checked onchange="toggleInputMode()">
+                                    <label class="form-check-label" for="mode_files">Select Individual Images</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="input_mode" value="folder" id="mode_folder" onchange="toggleInputMode()">
+                                    <label class="form-check-label" for="mode_folder">Select Input Folder</label>
+                                </div>
+                            </div>
+
+                            <!-- File Upload Section -->
+                            <div id="file_input_section" class="mb-4">
+                                <label for="files" class="form-label">Select Images</label>
+                                <input type="file" class="form-control" id="files" name="files[]" multiple accept=".png,.jpg,.jpeg,.bmp">
+                                <div class="form-text">Supported formats: PNG, JPG, JPEG, BMP</div>
+                            </div>
+
+                            <!-- Folder Path Section -->
+                            <div id="folder_input_section" class="mb-4" style="display: none;">
+                                <label for="folder_files" class="form-label">Select Input Folder</label>
+                                <input type="file" class="form-control" id="folder_files" name="folder_files[]" multiple webkitdirectory directory>
+                                <div class="form-text">Select a folder containing images to upload and process.</div>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="form-label">Augmentation Operations</label>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="operations" value="rotate" id="rotate">
+                                            <label class="form-check-label" for="rotate">Rotate (90°, 180°, 270°)</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="operations" value="flip" id="flip">
+                                            <label class="form-check-label" for="flip">Flip (Horizontal & Vertical)</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="operations" value="noise" id="noise">
+                                            <label class="form-check-label" for="noise">Add Gaussian Noise</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="operations" value="blur" id="blur">
+                                            <label class="form-check-label" for="blur">Blur</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="operations" value="grayscale" id="grayscale">
+                                            <label class="form-check-label" for="grayscale">Grayscale</label>
+                                        </div>
+                                        <div class="form-check mb-3">
+                                            <input class="form-check-input" type="checkbox" name="operations" value="scale" id="scale" onchange="toggleOptions('scale_options', this.checked)">
+                                            <label class="form-check-label" for="scale">Scale (Zoom In/Out)</label>
+                                            <div id="scale_options" class="mt-2 ms-4" style="display:none;">
+                                                <div class="row g-2">
+                                                    <div class="col-6">
+                                                        <label class="form-label small mb-1">Zoom In (%)</label>
+                                                        <input type="number" class="form-control form-control-sm" name="scale_up" min="0" max="100" value="20" placeholder="+">
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <label class="form-label small mb-1">Zoom Out (%)</label>
+                                                        <input type="number" class="form-control form-control-sm" name="scale_down" min="0" max="100" value="20" placeholder="-">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="form-check mb-3">
+                                            <input class="form-check-input" type="checkbox" name="operations" value="crop" id="crop">
+                                            <label class="form-check-label" for="crop">Random Crop</label>
+                                        </div>
+                                        <div class="form-check mb-3">
+                                            <input class="form-check-input" type="checkbox" name="operations" value="brightness" id="brightness" onchange="toggleOptions('brightness_options', this.checked)">
+                                            <label class="form-check-label" for="brightness">Brightness Adjustment</label>
+                                            <div id="brightness_options" class="mt-2 ms-4" style="display:none;">
+                                                <div class="row g-2">
+                                                    <div class="col-6">
+                                                        <label class="form-label small mb-1">Increase (%)</label>
+                                                        <input type="number" class="form-control form-control-sm" name="brightness_up" min="0" max="100" value="30" placeholder="+">
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <label class="form-label small mb-1">Decrease (%)</label>
+                                                        <input type="number" class="form-control form-control-sm" name="brightness_down" min="0" max="100" value="30" placeholder="-">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="form-check mb-3">
+                                            <input class="form-check-input" type="checkbox" name="operations" value="contrast" id="contrast" onchange="toggleOptions('contrast_options', this.checked)">
+                                            <label class="form-check-label" for="contrast">Contrast Adjustment</label>
+                                            <div id="contrast_options" class="mt-2 ms-4" style="display:none;">
+                                                <div class="row g-2">
+                                                    <div class="col-6">
+                                                        <label class="form-label small mb-1">Increase (%)</label>
+                                                        <input type="number" class="form-control form-control-sm" name="contrast_up" min="0" max="100" value="30" placeholder="+">
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <label class="form-label small mb-1">Decrease (%)</label>
+                                                        <input type="number" class="form-control form-control-sm" name="contrast_down" min="0" max="100" value="30" placeholder="-">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="form-check mb-3">
+                                            <input class="form-check-input" type="checkbox" name="operations" value="erase" id="erase">
+                                            <label class="form-check-label" for="erase">Random Erasing (Noise)</label>
+                                        </div>
+                                        <div class="form-check mb-3">
+                                            <input class="form-check-input" type="checkbox" name="operations" value="mask" id="mask">
+                                            <label class="form-check-label" for="mask">Random Masking (Blackout)</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary w-100">Generate Augmented Images</button>
+                        </form>
+                    </div>
                     
-                    <!-- Input Mode Selection -->
-                    <div class="mb-4">
-                        <label class="form-label">Input Source</label>
-                        <div class="form-check">
-                            <input class="form-check-input" type="radio" name="input_mode" value="files" id="mode_files" checked onchange="toggleInputMode()">
-                            <label class="form-check-label" for="mode_files">Select Individual Images</label>
-                        </div>
-                        <div class="form-check">
-                            <input class="form-check-input" type="radio" name="input_mode" value="folder" id="mode_folder" onchange="toggleInputMode()">
-                            <label class="form-check-label" for="mode_folder">Select Input Folder</label>
-                        </div>
-                    </div>
-
-                    <!-- File Upload Section -->
-                    <div id="file_input_section" class="mb-4">
-                        <label for="files" class="form-label">Select Images</label>
-                        <input type="file" class="form-control" id="files" name="files[]" multiple accept=".png,.jpg,.jpeg,.bmp">
-                        <div class="form-text">Supported formats: PNG, JPG, JPEG, BMP</div>
-                    </div>
-
-                    <!-- Folder Path Section -->
-                    <div id="folder_input_section" class="mb-4" style="display: none;">
-                        <label for="folder_files" class="form-label">Select Input Folder</label>
-                        <input type="file" class="form-control" id="folder_files" name="folder_files[]" multiple webkitdirectory directory>
-                        <div class="form-text">Select a folder containing images to upload and process.</div>
-                    </div>
-
-                    <div class="mb-4">
-                        <label class="form-label">Augmentation Operations</label>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="operations" value="rotate" id="rotate">
-                                    <label class="form-check-label" for="rotate">Rotate (90°, 180°, 270°)</label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="operations" value="flip" id="flip">
-                                    <label class="form-check-label" for="flip">Flip (Horizontal & Vertical)</label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="operations" value="noise" id="noise">
-                                    <label class="form-check-label" for="noise">Add Gaussian Noise</label>
+                    <div class="tab-pane fade" id="text-content" role="tabpanel" aria-labelledby="text-tab">
+                        <form action="{{ url_for('main.augment_text') }}" method="post">
+                            <div class="mb-3">
+                                <label for="input_text" class="form-label">Input Text</label>
+                                <textarea class="form-control" id="input_text" name="input_text" rows="5" required placeholder="Enter text to augment..."></textarea>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label class="form-label">Text Augmentation Operations</label>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="text_operations" value="uppercase" id="uppercase">
+                                            <label class="form-check-label" for="uppercase">Uppercase</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="text_operations" value="lowercase" id="lowercase">
+                                            <label class="form-check-label" for="lowercase">Lowercase</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="text_operations" value="delete" id="delete">
+                                            <label class="form-check-label" for="delete">Random Deletion</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="text_operations" value="swap" id="swap">
+                                            <label class="form-check-label" for="swap">Random Swap</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="text_operations" value="insert" id="insert">
+                                            <label class="form-check-label" for="insert">Random Insertion</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="text_operations" value="noise" id="noise">
+                                            <label class="form-check-label" for="noise">Character Noise</label>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="col-md-6">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="operations" value="blur" id="blur">
-                                    <label class="form-check-label" for="blur">Blur</label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="operations" value="grayscale" id="grayscale">
-                                    <label class="form-check-label" for="grayscale">Grayscale</label>
-                                </div>
-                            </div>
-                        </div>
+                            
+                            <button type="submit" class="btn btn-primary w-100">Generate Augmented Text</button>
+                        </form>
                     </div>
-
-                    <button type="submit" class="btn btn-primary w-100">Generate Augmented Images</button>
-                </form>
+                </div>
             </div>
         </div>
     </div>
@@ -95,7 +213,24 @@ function toggleInputMode() {
     }
 }
 
+function toggleOptions(elementId, checked) {
+    var element = document.getElementById(elementId);
+    if (checked) {
+        element.style.display = 'block';
+    } else {
+        element.style.display = 'none';
+    }
+}
+
 // Initialize on page load
 toggleInputMode();
+var scaleCheckbox = document.getElementById('scale');
+if (scaleCheckbox) toggleOptions('scale_options', scaleCheckbox.checked);
+
+var brightnessCheckbox = document.getElementById('brightness');
+if (brightnessCheckbox) toggleOptions('brightness_options', brightnessCheckbox.checked);
+
+var contrastCheckbox = document.getElementById('contrast');
+if (contrastCheckbox) toggleOptions('contrast_options', contrastCheckbox.checked);
 </script>
 {% endblock %}
