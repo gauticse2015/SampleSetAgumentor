@@ -154,35 +154,82 @@
                                 <div class="row">
                                     <div class="col-md-6">
                                         <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" name="text_operations" value="uppercase" id="uppercase">
-                                            <label class="form-check-label" for="uppercase">Uppercase</label>
+                                            <input class="form-check-input" type="checkbox" name="text_operations" value="synonym" id="text_synonym" onchange="toggleSynonymLang(this.checked)">
+                                            <label class="form-check-label" for="text_synonym">Synonym Replacement</label>
+                                        </div>
+                                        <!-- Language selector – shown only when Synonym Replacement is checked -->
+                                        <div id="synonym_lang_block" class="mt-2 ms-4 mb-2" style="display:none;">
+                                            <label for="synonym_lang" class="form-label small mb-1">Language <span class="text-muted">(for synonym lookup)</span></label>
+                                            <select class="form-select form-select-sm" id="synonym_lang" name="synonym_lang">
+                                                <option value="eng" selected>English</option>
+                                                <option value="spa">Spanish</option>
+                                                <option value="fra">French</option>
+                                                <option value="ita">Italian</option>
+                                                <option value="por">Portuguese</option>
+                                                <option value="nld">Dutch</option>
+                                                <option value="pol">Polish</option>
+                                                <option value="fin">Finnish</option>
+                                                <option value="jpn">Japanese</option>
+                                                <option value="cmn">Chinese (Mandarin)</option>
+                                                <option value="arb">Arabic</option>
+                                                <option value="ind">Indonesian</option>
+                                                <option value="tha">Thai</option>
+                                                <option value="hrv">Croatian</option>
+                                                <option value="slv">Slovenian</option>
+                                                <option value="bul">Bulgarian</option>
+                                                <option value="dan">Danish</option>
+                                                <option value="swe">Swedish</option>
+                                                <option value="ell">Greek</option>
+                                                <option value="heb">Hebrew</option>
+                                                <option value="fas">Persian</option>
+                                                <option value="cat">Catalan</option>
+                                                <option value="eus">Basque</option>
+                                                <option value="glg">Galician</option>
+                                                <option value="zsm">Malay</option>
+                                                <option value="als">Albanian</option>
+                                                <option value="ron">Romanian</option>
+                                                <option value="lit">Lithuanian</option>
+                                                <option value="slk">Slovak</option>
+                                                <option value="isl">Icelandic</option>
+                                                <option value="nob">Norwegian (Bokmål)</option>
+                                                <option value="nno">Norwegian (Nynorsk)</option>
+                                            </select>
+                                            <div class="form-text">Powered by WordNet + Open Multilingual WordNet — fully offline.</div>
                                         </div>
                                         <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" name="text_operations" value="lowercase" id="lowercase">
-                                            <label class="form-check-label" for="lowercase">Lowercase</label>
+                                            <input class="form-check-input" type="checkbox" name="text_operations" value="random_insert" id="text_random_insert">
+                                            <label class="form-check-label" for="text_random_insert">Random Insertion</label>
                                         </div>
                                         <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" name="text_operations" value="delete" id="delete">
-                                            <label class="form-check-label" for="delete">Random Deletion</label>
+                                            <input class="form-check-input" type="checkbox" name="text_operations" value="random_swap" id="text_random_swap">
+                                            <label class="form-check-label" for="text_random_swap">Random Word Swap</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="text_operations" value="random_delete" id="text_random_delete">
+                                            <label class="form-check-label" for="text_random_delete">Random Deletion</label>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" name="text_operations" value="swap" id="swap">
-                                            <label class="form-check-label" for="swap">Random Swap</label>
+                                            <input class="form-check-input" type="checkbox" name="text_operations" value="case_change" id="text_case_change">
+                                            <label class="form-check-label" for="text_case_change">Case Variations</label>
                                         </div>
                                         <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" name="text_operations" value="insert" id="insert">
-                                            <label class="form-check-label" for="insert">Random Insertion</label>
+                                            <input class="form-check-input" type="checkbox" name="text_operations" value="punctuation" id="text_punctuation">
+                                            <label class="form-check-label" for="text_punctuation">Punctuation Manipulation</label>
                                         </div>
                                         <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" name="text_operations" value="noise" id="noise">
-                                            <label class="form-check-label" for="noise">Character Noise</label>
+                                            <input class="form-check-input" type="checkbox" name="text_operations" value="back_translation" id="text_back_translation">
+                                            <label class="form-check-label" for="text_back_translation">Back Translation</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="text_operations" value="spacing" id="text_spacing">
+                                            <label class="form-check-label" for="text_spacing">Random Spacing</label>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <button type="submit" class="btn btn-primary w-100">Generate Augmented Text</button>
                         </form>
                     </div>
@@ -220,6 +267,10 @@ function toggleOptions(elementId, checked) {
     } else {
         element.style.display = 'none';
     }
+}
+
+function toggleSynonymLang(checked) {
+    document.getElementById('synonym_lang_block').style.display = checked ? 'block' : 'none';
 }
 
 // Initialize on page load

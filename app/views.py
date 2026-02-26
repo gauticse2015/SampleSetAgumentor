@@ -17,20 +17,20 @@ def allowed_file(filename):
 def augment_text():
     text = request.form.get('input_text')
     operations = request.form.getlist('text_operations')
-    
+    # ISO 639-3 language code for synonym replacement (default: English)
+    lang = request.form.get('synonym_lang', 'eng').strip() or 'eng'
+
     if not text:
         flash('No text provided')
         return redirect(url_for('main.index'))
-        
+
     if not operations:
         flash('No text augmentation operations selected')
         return redirect(url_for('main.index'))
-        
+
     augmentor = TextAugmentor()
-    # We can add config extraction here if we add inputs for probabilities/counts later
-    config = {} 
-    
-    augmented_texts = augmentor.process_text(text, operations, config)
+
+    augmented_texts = augmentor.process_text(text, operations, lang=lang)
     
     output_path = current_app.config['OUTPUT_FOLDER']
     if not os.path.exists(output_path):
@@ -39,11 +39,11 @@ def augment_text():
     timestamp = int(time.time())
     saved_files = []
     
-    for i, item in enumerate(augmented_texts):
-        filename = f"text_aug_{timestamp}_{i}_{item['name'].replace(' ', '_').lower()}.txt"
+    for i, (aug_type, aug_text) in enumerate(augmented_texts):
+        filename = f"text_aug_{timestamp}_{i}_{aug_type.replace(' ', '_').lower()}.txt"
         filepath = os.path.join(output_path, filename)
-        with open(filepath, 'w') as f:
-            f.write(item['content'])
+        with open(filepath, 'w', encoding='utf-8') as f:
+            f.write(aug_text)
         saved_files.append(filename)
         
     session['generated_text_files'] = saved_files
@@ -214,6 +214,61 @@ def results():
 @main_bp.route('/generated/<filename>')
 def generated_file(filename):
     return send_from_directory(current_app.config['OUTPUT_FOLDER'], filename)
+
+@main_bp.route('/save_texts', methods=['POST'])
+def save_texts():
+    selected_texts = request.form.getlist('selected_texts')
+    output_path = request.form.get('output_path', '').strip()
+
+    if not selected_texts:
+        flash('No text files selected for saving', 'error')
+        return redirect(url_for('main.text_results'))
+
+    if not output_path:
+        flash('No output folder path provided', 'error')
+        return redirect(url_for('main.text_results'))
+
+    output_path = os.path.expanduser(output_path)
+    if not os.path.isabs(output_path):
+        output_path = os.path.abspath(output_path)
+
+    try:
+        os.makedirs(output_path, exist_ok=True)
+    except Exception as e:
+        flash(f'Error creating output directory: {str(e)}', 'error')
+        return redirect(url_for('main.text_results'))
+
+    generated_path = current_app.config['OUTPUT_FOLDER']
+    saved_count = 0
+    errors = []
+
+    for text_filename in selected_texts:
+        source_path = os.path.join(generated_path, text_filename)
+        if os.path.exists(source_path):
+            try:
+                dest_path = os.path.join(output_path, text_filename)
+                counter = 1
+                base_name, ext = os.path.splitext(text_filename)
+                while os.path.exists(dest_path):
+                    dest_path = os.path.join(output_path, f"{base_name}_{counter}{ext}")
+                    counter += 1
+                with open(source_path, 'rb') as src, open(dest_path, 'wb') as dst:
+                    dst.write(src.read())
+                saved_count += 1
+            except Exception as e:
+                errors.append(f"Error saving {text_filename}: {str(e)}")
+        else:
+            errors.append(f"File not found: {text_filename}")
+
+    if errors:
+        for error in errors:
+            flash(error, 'error')
+
+    if saved_count > 0:
+        flash(f'Successfully saved {saved_count} text file(s)', 'success')
+
+    return redirect(url_for('main.text_results'))
+
 
 @main_bp.route('/save', methods=['POST'])
 def save_images():

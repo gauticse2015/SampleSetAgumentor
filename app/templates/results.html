@@ -1,92 +1,120 @@
 {% extends "base.html" %}
 
 {% block content %}
-<form action="{{ url_for('main.save_images') }}" method="post">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>Generated Results</h2>
         <div>
-            <a href="{{ url_for('main.index') }}" class="btn btn-secondary me-2">Process More</a>
-            <button type="submit" class="btn btn-primary">Save Selected to Folder</button>
-        </div>
-    </div>
-
-    {% if images or text_files %}
-    <div class="card mb-4">
-        <div class="card-header">
-            <h5 class="mb-0">Output Configuration</h5>
-        </div>
-        <div class="card-body">
-            <div class="mb-3">
-                <label for="output_path" class="form-label">Output Folder Path</label>
-                <div class="input-group">
-                    <input type="text" class="form-control" id="output_path" name="output_path" 
-                           placeholder="/path/to/output/folder" required>
-                    <button type="button" class="btn btn-outline-secondary" id="browseBtn">Browse...</button>
-                </div>
-                <div class="form-text">Enter the absolute or relative path where selected files will be saved, or click Browse to select a folder.</div>
-            </div>
-        </div>
-    </div>
-
-    <div class="row mb-3">
-        <div class="col">
-            <div class="form-check">
-                <input class="form-check-input" type="checkbox" id="selectAll">
-                <label class="form-check-label" for="selectAll">Select All</label>
-            </div>
+            <a href="{{ url_for('main.index') }}" class="btn btn-secondary">Process More</a>
         </div>
     </div>
 
     {% if images %}
-    <div class="row row-cols-1 row-cols-md-3 g-4">
-        {% for image in images %}
-        <div class="col">
-            <div class="card h-100">
-                <div class="card-header">
-                    <div class="form-check">
-                        <input class="form-check-input image-checkbox" type="checkbox" name="selected_images" value="{{ image }}" id="check_{{ loop.index }}">
-                        <label class="form-check-label" for="check_{{ loop.index }}">Select</label>
+    <form action="{{ url_for('main.save_images') }}" method="post">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Save Images — Output Configuration</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label for="output_path_images" class="form-label">Output Folder Path</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="output_path_images" name="output_path"
+                               placeholder="/path/to/output/folder" required>
+                        <button type="button" class="btn btn-outline-secondary" id="browseBtnImages">Browse...</button>
                     </div>
-                </div>
-                <a href="#" onclick="showPreview('{{ url_for('main.generated_file', filename=image) }}', '{{ image }}'); return false;" title="Click to preview">
-                    <img src="{{ url_for('main.generated_file', filename=image) }}" class="card-img-top" alt="{{ image }}">
-                </a>
-                <div class="card-body">
-                    <p class="card-text text-center text-muted small">{{ image }}</p>
+                    <div class="form-text">Enter the absolute or relative path where selected images will be saved.</div>
                 </div>
             </div>
         </div>
-        {% endfor %}
-    </div>
+
+        <div class="row mb-3">
+            <div class="col d-flex justify-content-between align-items-center">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="selectAllImages">
+                    <label class="form-check-label" for="selectAllImages">Select All</label>
+                </div>
+                <button type="submit" class="btn btn-primary">Save Selected Images to Folder</button>
+            </div>
+        </div>
+
+        <div class="row row-cols-1 row-cols-md-3 g-4 mb-5">
+            {% for image in images %}
+            <div class="col">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <div class="form-check">
+                            <input class="form-check-input image-checkbox" type="checkbox" name="selected_images" value="{{ image }}" id="check_{{ loop.index }}">
+                            <label class="form-check-label" for="check_{{ loop.index }}">Select</label>
+                        </div>
+                    </div>
+                    <a href="#" onclick="showPreview('{{ url_for('main.generated_file', filename=image) }}', '{{ image }}'); return false;" title="Click to preview">
+                        <img src="{{ url_for('main.generated_file', filename=image) }}" class="card-img-top" alt="{{ image }}">
+                    </a>
+                    <div class="card-body">
+                        <p class="card-text text-center text-muted small">{{ image }}</p>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </form>
     {% endif %}
 
     {% if text_files %}
-    <div class="row row-cols-1 row-cols-md-2 g-4">
-        {% for file in text_files %}
-        <div class="col">
-            <div class="card h-100">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <div class="form-check">
-                        <input class="form-check-input image-checkbox" type="checkbox" name="selected_images" value="{{ file.filename }}" id="check_text_{{ loop.index }}">
-                        <label class="form-check-label" for="check_text_{{ loop.index }}">Select</label>
+    <form action="{{ url_for('main.save_texts') }}" method="post">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Save Text Files — Output Configuration</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label for="output_path_texts" class="form-label">Output Folder Path</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="output_path_texts" name="output_path"
+                               placeholder="/path/to/output/folder" required>
+                        <button type="button" class="btn btn-outline-secondary" id="browseBtnTexts">Browse...</button>
                     </div>
-                    <small class="text-muted text-truncate ms-2" title="{{ file.filename }}">{{ file.filename }}</small>
-                </div>
-                <div class="card-body">
-                    <pre class="bg-light p-3 border rounded mb-0" style="white-space: pre-wrap; max-height: 200px; overflow-y: auto; font-size: 0.9rem;">{{ file.content }}</pre>
+                    <div class="form-text">Enter the absolute or relative path where selected text files will be saved.</div>
                 </div>
             </div>
         </div>
-        {% endfor %}
-    </div>
+
+        <div class="row mb-3">
+            <div class="col d-flex justify-content-between align-items-center">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="selectAllTexts">
+                    <label class="form-check-label" for="selectAllTexts">Select All</label>
+                </div>
+                <button type="submit" class="btn btn-primary">Save Selected Text Files to Folder</button>
+            </div>
+        </div>
+
+        <div class="row row-cols-1 row-cols-md-2 g-4 mb-5">
+            {% for file in text_files %}
+            <div class="col">
+                <div class="card h-100">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <div class="form-check">
+                            <input class="form-check-input text-checkbox" type="checkbox" name="selected_texts" value="{{ file.filename }}" id="check_text_{{ loop.index }}">
+                            <label class="form-check-label" for="check_text_{{ loop.index }}">Select</label>
+                        </div>
+                        <small class="text-muted text-truncate ms-2" title="{{ file.filename }}">{{ file.filename }}</small>
+                    </div>
+                    <div class="card-body">
+                        <pre class="bg-light p-3 border rounded mb-0" style="white-space: pre-wrap; max-height: 200px; overflow-y: auto; font-size: 0.9rem;">{{ file.content }}</pre>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </form>
     {% endif %}
 
-    {% else %}
+    {% if not images and not text_files %}
     <div class="alert alert-info">
         No results generated yet.
     </div>
     {% endif %}
-</form>
 
 <!-- Preview Modal -->
 <div class="modal fade" id="previewModal" tabindex="-1" aria-hidden="true">
@@ -104,6 +132,10 @@
 </div>
 
 <script>
+// Global variables to store directory handles
+var imageDirHandle = null;
+var textDirHandle = null;
+
 function showPreview(src, title) {
     document.getElementById('previewImage').src = src;
     document.getElementById('previewTitle').textContent = title;
@@ -111,31 +143,136 @@ function showPreview(src, title) {
     myModal.show();
 }
 
-document.getElementById('selectAll').addEventListener('change', function() {
-    var checkboxes = document.getElementsByClassName('image-checkbox');
-    for(var i = 0; i < checkboxes.length; i++) {
-        checkboxes[i].checked = this.checked;
-    }
-});
+// Select All — Images
+var selectAllImages = document.getElementById('selectAllImages');
+if (selectAllImages) {
+    selectAllImages.addEventListener('change', function() {
+        var checkboxes = document.getElementsByClassName('image-checkbox');
+        for (var i = 0; i < checkboxes.length; i++) {
+            checkboxes[i].checked = this.checked;
+        }
+    });
+}
 
-// File system access API for folder selection
-document.getElementById('browseBtn').addEventListener('click', async function() {
+// Select All — Text files
+var selectAllTexts = document.getElementById('selectAllTexts');
+if (selectAllTexts) {
+    selectAllTexts.addEventListener('change', function() {
+        var checkboxes = document.getElementsByClassName('text-checkbox');
+        for (var i = 0; i < checkboxes.length; i++) {
+            checkboxes[i].checked = this.checked;
+        }
+    });
+}
+
+// Browse button helper (uses File System Access API where available)
+async function pickFolder(inputId, type) {
     try {
-        // Check if File System Access API is supported
         if ('showDirectoryPicker' in window) {
-            const dirHandle = await window.showDirectoryPicker();
-            // Get the directory path (we'll store the handle and use it)
-            const path = dirHandle.name;
-            document.getElementById('output_path').value = path;
-            // Store the directory handle for later use
-            window.selectedDirectoryHandle = dirHandle;
+            const dirHandle = await window.showDirectoryPicker({mode: 'readwrite'});
+            document.getElementById(inputId).value = dirHandle.name;
+            
+            if (type === 'image') {
+                imageDirHandle = dirHandle;
+            } else {
+                textDirHandle = dirHandle;
+            }
         } else {
-            // Fallback for browsers that don't support File System Access API
             alert('Your browser does not support folder selection. Please type the folder path manually.');
         }
     } catch (err) {
         console.error('Error selecting directory:', err);
     }
-});
+}
+
+var browseBtnImages = document.getElementById('browseBtnImages');
+if (browseBtnImages) {
+    browseBtnImages.addEventListener('click', function() { pickFolder('output_path_images', 'image'); });
+}
+
+var browseBtnTexts = document.getElementById('browseBtnTexts');
+if (browseBtnTexts) {
+    browseBtnTexts.addEventListener('click', function() { pickFolder('output_path_texts', 'text'); });
+}
+
+// Client-side save handler
+async function handleClientSideSave(event, type) {
+    var dirHandle = (type === 'image') ? imageDirHandle : textDirHandle;
+    
+    // If no directory handle (manual entry or not supported), let server handle it
+    if (!dirHandle) {
+        return true; 
+    }
+    
+    event.preventDefault();
+    
+    var form = event.target;
+    var checkboxes = form.querySelectorAll('input[type="checkbox"][name^="selected_"]:checked');
+    
+    if (checkboxes.length === 0) {
+        alert('No files selected!');
+        return false;
+    }
+    
+    var btn = form.querySelector('button[type="submit"]');
+    var originalText = btn.textContent;
+    btn.textContent = 'Saving locally...';
+    btn.disabled = true;
+    
+    try {
+        var savedCount = 0;
+        var errors = [];
+        
+        for (var i = 0; i < checkboxes.length; i++) {
+            var filename = checkboxes[i].value;
+            // Construct the download URL
+            var url = "{{ url_for('main.generated_file', filename='') }}" + filename;
+            
+            try {
+                // Fetch file from server
+                var response = await fetch(url);
+                if (!response.ok) throw new Error('Download failed');
+                var blob = await response.blob();
+                
+                // Write to local file
+                var fileHandle = await dirHandle.getFileHandle(filename, { create: true });
+                var writable = await fileHandle.createWritable();
+                await writable.write(blob);
+                await writable.close();
+                
+                savedCount++;
+            } catch (err) {
+                console.error('Error saving ' + filename, err);
+                errors.push(filename + ': ' + err.message);
+            }
+        }
+        
+        if (errors.length > 0) {
+            alert('Saved ' + savedCount + ' files. Errors:\n' + errors.join('\n'));
+        } else {
+            alert('Successfully saved ' + savedCount + ' files to ' + dirHandle.name);
+        }
+        
+    } catch (err) {
+        console.error('Save failed:', err);
+        alert('Save failed: ' + err.message);
+    } finally {
+        btn.textContent = originalText;
+        btn.disabled = false;
+    }
+    
+    return false;
+}
+
+// Attach handlers to forms
+var imageForm = document.querySelector('form[action="{{ url_for("main.save_images") }}"]');
+if (imageForm) {
+    imageForm.addEventListener('submit', function(e) { handleClientSideSave(e, 'image'); });
+}
+
+var textForm = document.querySelector('form[action="{{ url_for("main.save_texts") }}"]');
+if (textForm) {
+    textForm.addEventListener('submit', function(e) { handleClientSideSave(e, 'text'); });
+}
 </script>
 {% endblock %}

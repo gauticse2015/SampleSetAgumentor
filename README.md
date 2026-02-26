@@ -53,12 +53,27 @@ A Flask-based web application designed to generate augmented variations of image
     pip install -r requirements.txt
     ```
 
-3.  **Run the application**:
+3.  **Prepare NLTK Data (Offline Usage)**:
+    The application uses NLTK for synonym replacement. For offline environments (like Docker containers), you must download the data during the build process.
+    
+    Run this command to download the required corpora to the `nltk_data` directory within the project:
+    ```bash
+    python -m nltk.downloader -d nltk_data wordnet omw-1.4
+    ```
+    
+    **For Dockerfile:**
+    Add the following lines to your `Dockerfile` after installing requirements:
+    ```dockerfile
+    # Download NLTK data to project directory
+    RUN python -m nltk.downloader -d /app/nltk_data wordnet omw-1.4
+    ```
+
+4.  **Run the application**:
     ```bash
     python run.py
     ```
 
-4.  **Access the application**:
+5.  **Access the application**:
     Open your web browser and navigate to `http://localhost:5000`.
 
 ## Usage Guide

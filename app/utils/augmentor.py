@@ -35,8 +35,8 @@ class ImageAugmentor:
                         
                         # Save augmented images with timestamp to avoid conflicts
                         base_name = os.path.splitext(filename)[0]
-                        for idx, aug_img in enumerate(augmented_images):
-                            save_name = f"{base_name}_aug_{timestamp}_{idx}.jpg"
+                        for idx, (aug_name, aug_img) in enumerate(augmented_images):
+                            save_name = f"{base_name}_aug_{timestamp}_{idx}_{aug_name}.jpg"
                             save_path = os.path.join(self.output_path, save_name)
                             aug_img.save(save_path, 'JPEG')
                             generated_files.append(save_name)
@@ -54,30 +54,27 @@ class ImageAugmentor:
         augmented_results = []
         config = config or {}
         
-        # Always include the original image
-        augmented_results.append(image.copy())
-        
         if 'rotate' in operations:
             # Generate 3 rotated versions
             for angle in [90, 180, 270]:
-                augmented_results.append(image.rotate(angle, expand=True))
+                augmented_results.append((f"rotate_{angle}", image.rotate(angle, expand=True)))
                 
         if 'flip' in operations:
-            augmented_results.append(ImageOps.mirror(image))
-            augmented_results.append(ImageOps.flip(image))
+            augmented_results.append(("flip_mirror", ImageOps.mirror(image)))
+            augmented_results.append(("flip_vertical", ImageOps.flip(image)))
             
         if 'noise' in operations:
             # Add Gaussian noise
             img_array = np.array(image)
             noise = np.random.normal(0, 25, img_array.shape)
             noisy_img = np.clip(img_array + noise, 0, 255).astype(np.uint8)
-            augmented_results.append(Image.fromarray(noisy_img))
+            augmented_results.append(("noise", Image.fromarray(noisy_img)))
             
         if 'blur' in operations:
-            augmented_results.append(image.filter(ImageFilter.BLUR))
+            augmented_results.append(("blur", image.filter(ImageFilter.BLUR)))
             
         if 'grayscale' in operations:
-            augmented_results.append(ImageOps.grayscale(image).convert('RGB'))
+            augmented_results.append(("grayscale", ImageOps.grayscale(image).convert('RGB')))
             
         if 'scale' in operations:
             # Get scale percentages (default to 20%)
@@ -87,19 +84,19 @@ class ImageAugmentor:
             # Calculate factors: 1.0 + pct for zoom in, 1.0 - pct for zoom out
             factors = []
             if scale_down_pct > 0:
-                factors.append(max(0.1, 1.0 - scale_down_pct)) # Prevent negative or zero scale
+                factors.append(('zoom_out', max(0.1, 1.0 - scale_down_pct))) # Prevent negative or zero scale
             if scale_up_pct > 0:
-                factors.append(1.0 + scale_up_pct)
+                factors.append(('zoom_in', 1.0 + scale_up_pct))
                 
-            for scale_factor in factors:
+            for name, scale_factor in factors:
                 scaled_img = self._scale_image(image, scale_factor)
-                augmented_results.append(scaled_img)
+                augmented_results.append((f"scale_{name}", scaled_img))
                 
         if 'crop' in operations:
             # Generate random crop versions
-            for _ in range(2):  # Generate 2 random crops
+            for i in range(2):  # Generate 2 random crops
                 cropped_img = self._random_crop(image)
-                augmented_results.append(cropped_img)
+                augmented_results.append((f"crop_{i}", cropped_img))
                 
         if 'brightness' in operations:
             # Get brightness percentages (default to 30%)
@@ -108,13 +105,13 @@ class ImageAugmentor:
             
             factors = []
             if bright_down_pct > 0:
-                factors.append(max(0.1, 1.0 - bright_down_pct))
+                factors.append(('darker', max(0.1, 1.0 - bright_down_pct)))
             if bright_up_pct > 0:
-                factors.append(1.0 + bright_up_pct)
+                factors.append(('brighter', 1.0 + bright_up_pct))
                 
-            for factor in factors:
+            for name, factor in factors:
                 bright_img = self._adjust_brightness(image, factor)
-                augmented_results.append(bright_img)
+                augmented_results.append((f"brightness_{name}", bright_img))
                 
         if 'contrast' in operations:
             # Get contrast percentages (default to 30%)
@@ -123,25 +120,25 @@ class ImageAugmentor:
             
             factors = []
             if contrast_down_pct > 0:
-                factors.append(max(0.1, 1.0 - contrast_down_pct))
+                factors.append(('lower', max(0.1, 1.0 - contrast_down_pct)))
             if contrast_up_pct > 0:
-                factors.append(1.0 + contrast_up_pct)
+                factors.append(('higher', 1.0 + contrast_up_pct))
                 
-            for factor in factors:
+            for name, factor in factors:
                 contrast_img = self._adjust_contrast(image, factor)
-                augmented_results.append(contrast_img)
+                augmented_results.append((f"contrast_{name}", contrast_img))
         
         if 'erase' in operations:
             # Generate 2 versions with random erasing (random noise)
-            for _ in range(2):
+            for i in range(2):
                 erased_img = self._random_erase(image)
-                augmented_results.append(erased_img)
+                augmented_results.append((f"erase_{i}", erased_img))
                 
         if 'mask' in operations:
             # Generate 2 versions with random masking (blackout)
-            for _ in range(2):
+            for i in range(2):
                 masked_img = self._random_mask(image)
-                augmented_results.append(masked_img)
+                augmented_results.append((f"mask_{i}", masked_img))
             
         return augmented_results
     
