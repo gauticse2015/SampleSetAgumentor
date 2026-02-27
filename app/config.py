@@ -5,7 +5,7 @@ class Config:
     UPLOAD_FOLDER = os.path.join(os.getcwd(), 'uploads')
     OUTPUT_FOLDER = os.path.join(os.getcwd(), 'generated')
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max upload size
-    ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'bmp'}
+    ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'bmp', 'docx'}
 
 class DevelopmentConfig(Config):
     DEBUG = True

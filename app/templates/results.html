@@ -60,6 +60,64 @@
     </form>
     {% endif %}
 
+    {% if dataset_docs %}
+    <form action="{{ url_for('main.save_datasets') }}" method="post">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Save Dataset Files — Output Configuration</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label for="output_path_datasets" class="form-label">Output Folder Path</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="output_path_datasets" name="output_path"
+                               placeholder="/path/to/output/folder" required>
+                        <button type="button" class="btn btn-outline-secondary" id="browseBtnDatasets">Browse...</button>
+                    </div>
+                    <div class="form-text">Enter the absolute or relative path where selected dataset files will be saved.</div>
+                </div>
+                {% if dataset_csv_ready %}
+                <div class="mb-3">
+                    <label class="form-label">Dataset CSV</label>
+                    <div>
+                        <a class="btn btn-outline-primary" href="{{ url_for('main.generated_dataset_file', filename=dataset_csv) }}" download>Download Dataset CSV</a>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col d-flex justify-content-between align-items-center">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="selectAllDatasets">
+                    <label class="form-check-label" for="selectAllDatasets">Select All</label>
+                </div>
+                <button type="submit" class="btn btn-primary">Save Selected Dataset Files to Folder</button>
+            </div>
+        </div>
+
+        <div class="row row-cols-1 row-cols-md-2 g-4 mb-5">
+            {% for doc in dataset_docs %}
+            <div class="col">
+                <div class="card h-100">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <div class="form-check">
+                            <input class="form-check-input dataset-checkbox" type="checkbox" name="selected_dataset_files" value="{{ doc.filename }}" id="check_dataset_{{ loop.index }}">
+                            <label class="form-check-label" for="check_dataset_{{ loop.index }}">Select</label>
+                        </div>
+                        <small class="text-muted text-truncate ms-2" title="{{ doc.filename }}">{{ doc.filename }}</small>
+                    </div>
+                    <div class="card-body">
+                        <pre class="bg-light p-3 border rounded mb-0" style="white-space: pre-wrap; max-height: 200px; overflow-y: auto; font-size: 0.9rem;">{{ doc.content }}</pre>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </form>
+    {% endif %}
+
     {% if text_files %}
     <form action="{{ url_for('main.save_texts') }}" method="post">
         <div class="card mb-4">
@@ -110,7 +168,7 @@
     </form>
     {% endif %}
 
-    {% if not images and not text_files %}
+    {% if not images and not text_files and not dataset_docs %}
     <div class="alert alert-info">
         No results generated yet.
     </div>
@@ -135,6 +193,7 @@
 // Global variables to store directory handles
 var imageDirHandle = null;
 var textDirHandle = null;
+var datasetDirHandle = null;
 
 function showPreview(src, title) {
     document.getElementById('previewImage').src = src;
@@ -165,6 +224,16 @@ if (selectAllTexts) {
     });
 }
 
+var selectAllDatasets = document.getElementById('selectAllDatasets');
+if (selectAllDatasets) {
+    selectAllDatasets.addEventListener('change', function() {
+        var checkboxes = document.getElementsByClassName('dataset-checkbox');
+        for (var i = 0; i < checkboxes.length; i++) {
+            checkboxes[i].checked = this.checked;
+        }
+    });
+}
+
 // Browse button helper (uses File System Access API where available)
 async function pickFolder(inputId, type) {
     try {
@@ -174,8 +243,10 @@ async function pickFolder(inputId, type) {
             
             if (type === 'image') {
                 imageDirHandle = dirHandle;
-            } else {
+            } else if (type === 'text') {
                 textDirHandle = dirHandle;
+            } else if (type === 'dataset') {
+                datasetDirHandle = dirHandle;
             }
         } else {
             alert('Your browser does not support folder selection. Please type the folder path manually.');
@@ -195,9 +266,14 @@ if (browseBtnTexts) {
     browseBtnTexts.addEventListener('click', function() { pickFolder('output_path_texts', 'text'); });
 }
 
+var browseBtnDatasets = document.getElementById('browseBtnDatasets');
+if (browseBtnDatasets) {
+    browseBtnDatasets.addEventListener('click', function() { pickFolder('output_path_datasets', 'dataset'); });
+}
+
 // Client-side save handler
 async function handleClientSideSave(event, type) {
-    var dirHandle = (type === 'image') ? imageDirHandle : textDirHandle;
+    var dirHandle = (type === 'image') ? imageDirHandle : (type === 'text' ? textDirHandle : datasetDirHandle);
     
     // If no directory handle (manual entry or not supported), let server handle it
     if (!dirHandle) {
@@ -273,6 +349,11 @@ if (imageForm) {
 var textForm = document.querySelector('form[action="{{ url_for("main.save_texts") }}"]');
 if (textForm) {
     textForm.addEventListener('submit', function(e) { handleClientSideSave(e, 'text'); });
+}
+
+var datasetForm = document.querySelector('form[action="{{ url_for("main.save_datasets") }}"]');
+if (datasetForm) {
+    datasetForm.addEventListener('submit', function(e) { handleClientSideSave(e, 'dataset'); });
 }
 </script>
 {% endblock %}

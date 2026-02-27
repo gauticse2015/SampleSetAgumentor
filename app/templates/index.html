@@ -15,6 +15,9 @@
                     <li class="nav-item" role="presentation">
                         <button class="nav-link" id="text-tab" data-bs-toggle="tab" data-bs-target="#text-content" type="button" role="tab" aria-controls="text-content" aria-selected="false">Text Augmentation</button>
                     </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="dataset-tab" data-bs-toggle="tab" data-bs-target="#dataset-content" type="button" role="tab" aria-controls="dataset-content" aria-selected="false">Dataset Augmentation</button>
+                    </li>
                 </ul>
                 
                 <div class="tab-content" id="augmentationTabsContent">
@@ -233,6 +236,41 @@
                             <button type="submit" class="btn btn-primary w-100">Generate Augmented Text</button>
                         </form>
                     </div>
+
+                    <div class="tab-pane fade" id="dataset-content" role="tabpanel" aria-labelledby="dataset-tab">
+                        <form action="{{ url_for('main.augment_dataset') }}" method="post" enctype="multipart/form-data">
+                            <div class="mb-3">
+                                <label for="doc_file" class="form-label">Upload Editable Document (.docx)</label>
+                                <div class="input-group">
+                                    <input type="file" class="form-control" id="doc_file" name="doc_file" accept=".docx">
+                                    <button class="btn btn-outline-secondary" type="button" id="load_doc_btn">Load Content</button>
+                                </div>
+                                <div class="form-text">Upload a DOCX template. Click "Load Content" to preview and edit placeholders.</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Document Preview (Select fields here)</label>
+                                <div class="border rounded p-3 bg-light" style="max-height: 300px; overflow-y: auto; white-space: pre-wrap;" id="doc_preview">Upload a document and click "Load Content" to preview it here.</div>
+                                <div class="mt-2">
+                                    <button type="button" class="btn btn-sm btn-outline-primary" id="highlight_btn">Highlight Selection as Field</button>
+                                    <span class="text-muted small ms-2">Select only the field value (not the whole line). Include any surrounding spaces if you want them replaced too.</span>
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="form-label">Dataset Generation</label>
+                                <div class="row g-2">
+                                    <div class="col-md-4">
+                                        <label for="dataset_count" class="form-label small mb-1">Number of datasets</label>
+                                        <input type="number" class="form-control" id="dataset_count" name="dataset_count" min="1" value="10" required>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <input type="hidden" id="field_mappings" name="field_mappings">
+                            <button type="submit" class="btn btn-primary w-100">Generate Random Dataset</button>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
@@ -283,5 +321,106 @@ if (brightnessCheckbox) toggleOptions('brightness_options', brightnessCheckbox.c
 
 var contrastCheckbox = document.getElementById('contrast');
 if (contrastCheckbox) toggleOptions('contrast_options', contrastCheckbox.checked);
+
+var docFileInput = document.getElementById('doc_file');
+var loadDocBtn = document.getElementById('load_doc_btn');
+var docPreview = document.getElementById('doc_preview');
+
+var fieldMappingsInput = document.getElementById('field_mappings');
+var fieldMappings = [];
+
+var highlightBtn = document.getElementById('highlight_btn');
+if (highlightBtn && docPreview) {
+    highlightBtn.addEventListener('click', function() {
+        var selection = window.getSelection();
+        if (!selection || selection.isCollapsed) {
+            alert('Please select text in the preview to highlight.');
+            return;
+        }
+
+        var range = selection.getRangeAt(0);
+        if (!docPreview.contains(range.commonAncestorContainer)) {
+            alert('Please select text within the document preview.');
+            return;
+        }
+        
+        var selectedText = selection.toString();
+        var defaultName = selectedText.replace(/\s+/g, '_').toLowerCase();
+        var fieldName = prompt('Enter field name for "' + selectedText + '":', defaultName);
+        
+        if (fieldName) {
+            var placeholder = '{{ ' + fieldName + ' }}';
+            var highlightSpan = document.createElement('span');
+            highlightSpan.className = 'bg-warning';
+            highlightSpan.textContent = placeholder;
+
+            var tempRange = range.cloneRange();
+            tempRange.selectNodeContents(docPreview);
+            tempRange.setEnd(range.startContainer, range.startOffset);
+            var textBefore = tempRange.toString();
+            var contextWindow = 15;
+            var leftContext = textBefore.slice(Math.max(0, textBefore.length - contextWindow));
+
+            var tempRangeAfter = range.cloneRange();
+            tempRangeAfter.selectNodeContents(docPreview);
+            tempRangeAfter.setStart(range.endContainer, range.endOffset);
+            var textAfter = tempRangeAfter.toString();
+            var rightContext = textAfter.slice(0, contextWindow);
+
+            range.deleteContents();
+            range.insertNode(highlightSpan);
+            selection.removeAllRanges();
+            
+            fieldMappings.push({
+                original: selectedText,
+                placeholder: placeholder,
+                field: fieldName,
+                leftContext: leftContext,
+                rightContext: rightContext
+            });
+            if (fieldMappingsInput) {
+                fieldMappingsInput.value = JSON.stringify(fieldMappings);
+            }
+        }
+    });
+}
+
+if (loadDocBtn && docFileInput) {
+    loadDocBtn.addEventListener('click', function() {
+        if (!docFileInput.files.length) {
+            alert('Please select a file first.');
+            return;
+        }
+        
+        var formData = new FormData();
+        formData.append('doc_file', docFileInput.files[0]);
+        
+        loadDocBtn.disabled = true;
+        loadDocBtn.textContent = 'Loading...';
+        
+        fetch('{{ url_for("main.parse_docx") }}', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                alert('Error: ' + data.error);
+            } else {
+                if (docPreview) {
+                    docPreview.innerHTML = data.html || data.content.replace(/\n/g, '<br>');
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while uploading the file.');
+        })
+        .finally(() => {
+            loadDocBtn.disabled = false;
+            loadDocBtn.textContent = 'Load Content';
+        });
+    });
+}
 </script>
 {% endblock %}

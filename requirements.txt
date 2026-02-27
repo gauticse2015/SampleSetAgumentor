@@ -3,3 +3,4 @@ Werkzeug
 Pillow
 numpy
 nltk
+python-docx

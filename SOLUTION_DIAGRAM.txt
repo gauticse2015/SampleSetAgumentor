@@ -1,0 +1,212 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║                    FIELD PLACEMENT FIX - SOLUTION DIAGRAM                  ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ PROBLEM: Multiple Identical Fields at Different Locations                   │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+    Original DOCX:
+    ┌─────────────────────────────────────────┐
+    │ Customer Name: John Smith               │  ← Same value "John Smith"
+    │ Billing Name: John Smith                │  ← Same value "John Smith"
+    │ Shipping Name: John Smith               │  ← Same value "John Smith"
+    └─────────────────────────────────────────┘
+
+    User Highlights All Three:
+    ┌─────────────────────────────────────────┐
+    │ Customer Name: [John Smith]             │  ← Field: customer_name
+    │ Billing Name: [John Smith]              │  ← Field: billing_name
+    │ Shipping Name: [John Smith]             │  ← Field: shipping_name
+    └─────────────────────────────────────────┘
+
+    ❌ OLD APPROACH (Broken):
+        Uses simple occurrence counting: 1st, 2nd, 3rd
+        → All three get replaced at wrong locations
+        → Values get mixed up between fields
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ SOLUTION: Context-Based Field Identification                               │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+    Step 1: Capture Context When Highlighting
+    ┌─────────────────────────────────────────────────────────────────┐
+    │ User selects "John Smith" in "Customer Name: John Smith"        │
+    │                                                                 │
+    │ System captures:                                                │
+    │   contextBefore: "Customer Name: "                              │
+    │   contextAfter: ""                                              │
+    │   original: "John Smith"                                        │
+    │   field: "customer_name"                                        │
+    └─────────────────────────────────────────────────────────────────┘
+
+    Step 2: Store Complete Field Mapping
+    ┌─────────────────────────────────────────────────────────────────┐
+    │ Field 1:                                                        │
+    │   original: "John Smith"                                        │
+    │   field: "customer_name"                                        │
+    │   contextBefore: "Customer Name: "                              │
+    │   contextAfter: ""                                              │
+    │                                                                 │
+    │ Field 2:                                                        │
+    │   original: "John Smith"                                        │
+    │   field: "billing_name"                                         │
+    │   contextBefore: "Billing Name: "                               │
+    │   contextAfter: ""                                              │
+    │                                                                 │
+    │ Field 3:                                                        │
+    │   original: "John Smith"                                        │
+    │   field: "shipping_name"                                        │
+    │   contextBefore: "Shipping Name: "                              │
+    │   contextAfter: ""                                              │
+    └─────────────────────────────────────────────────────────────────┘
+
+    Step 3: Generate With Context-Based Replacement
+    ┌─────────────────────────────────────────────────────────────────┐
+    │ For Field 1 (customer_name):                                    │
+    │   search_pattern = "Customer Name: " + "John Smith" + ""        │
+    │   → Found in document                                           │
+    │   → Replace "John Smith" at this location with random value     │
+    │   → Result: "Customer Name: [RANDOM_VALUE_1]"                   │
+    │                                                                 │
+    │ For Field 2 (billing_name):                                     │
+    │   search_pattern = "Billing Name: " + "John Smith" + ""         │
+    │   → Found in document                                           │
+    │   → Replace "John Smith" at this location with random value     │
+    │   → Result: "Billing Name: [RANDOM_VALUE_2]"                    │
+    │                                                                 │
+    │ For Field 3 (shipping_name):                                    │
+    │   search_pattern = "Shipping Name: " + "John Smith" + ""        │
+    │   → Found in document                                           │
+    │   → Replace "John Smith" at this location with random value     │
+    │   → Result: "Shipping Name: [RANDOM_VALUE_3]"                   │
+    └─────────────────────────────────────────────────────────────────┘
+
+    ✅ RESULT (Generated Document 1):
+    ┌─────────────────────────────────────────┐
+    │ Customer Name: Alice Johnson            │  ← Correct placement
+    │ Billing Name: Bob Smith                 │  ← Correct placement
+    │ Shipping Name: Carol White              │  ← Correct placement
+    └─────────────────────────────────────────┘
+
+    ✅ RESULT (Generated Document 2):
+    ┌─────────────────────────────────────────┐
+    │ Customer Name: David Brown              │  ← Different value, correct
+    │ Billing Name: Eve Davis                 │  ← Different value, correct
+    │ Shipping Name: Frank Miller             │  ← Different value, correct
+    └─────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ THREE-LEVEL MATCHING STRATEGY                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+    Level 1: EXACT MATCH (Primary - Most Precise)
+    ┌─────────────────────────────────────────────────────────────────┐
+    │ search_pattern = contextBefore + original + contextAfter        │
+    │ if search_pattern found in text:                                │
+    │     Replace only the original part                              │
+    │     Mark as matched and continue                                │
+    └─────────────────────────────────────────────────────────────────┘
+
+    Level 2: PARTIAL MATCH (Fallback - Handles Formatting Variations)
+    ┌─────────────────────────────────────────────────────────────────┐
+    │ for each occurrence of original:                                │
+    │     if contextBefore appears before it AND                      │
+    │        contextAfter appears after it:                           │
+    │         Replace this occurrence                                 │
+    │         Mark as matched and continue                            │
+    └─────────────────────────────────────────────────────────────────┘
+
+    Level 3: SIMPLE MATCH (Legacy - Backward Compatible)
+    ┌─────────────────────────────────────────────────────────────────┐
+    │ if original text found in document:                             │
+    │     Replace first occurrence                                    │
+    │     Mark as matched and continue                                │
+    └─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ DATA FLOW                                                                   │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+    Frontend (Browser)              Backend (Flask)              DOCX File
+    ═════════════════════════════════════════════════════════════════════════
+
+    1. User selects text
+         │
+         ↓
+    2. Click "Highlight"
+         │
+         ↓
+    3. Capture context
+         │ (60 chars before/after)
+         ↓
+    4. Create field mapping
+         │ {original, field, contextBefore, contextAfter}
+         ↓
+    5. Send JSON to backend ────────→ Receive field mappings
+         │                               │
+         │                               ↓
+         │                            Parse mappings
+         │                               │
+         │                               ↓
+         │                            For each document:
+         │                               │
+         │                               ├─ Generate random values
+         │                               │
+         │                               ├─ Load template DOCX
+         │                               │
+         │                               ├─ For each field mapping:
+         │                               │   ├─ Search with context
+         │                               │   ├─ Replace at location
+         │                               │
+         │                               ├─ Save DOCX
+         │                               │
+         │                               ↓
+         │                            Return to frontend
+         │
+         ←───────── Download generated files ─────────
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ KEY IMPROVEMENTS                                                            │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+    BEFORE                              AFTER
+    ══════════════════════════════════════════════════════════════════════════
+    ❌ Occurrence counting              ✅ Context-based identification
+    ❌ Misplaced values                 ✅ Correct placement
+    ❌ Duplicate fields fail            ✅ Duplicate fields work
+    ❌ Complex docs unreliable          ✅ Complex docs robust
+    ❌ No fallback mechanism            ✅ Three-level fallback
+    ✅ DOCX formatting preserved        ✅ DOCX formatting preserved
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ CONTEXT WINDOW ILLUSTRATION                                                │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+    Document Text:
+    "...previous content... Customer Name: John Smith next content..."
+                            ↑                    ↑
+                            │                    │
+                            └────────────────────┘
+                                 Selected text
+    
+    Context Capture (60 chars each):
+    "...previous content... Customer Name: " ← contextBefore (60 chars)
+    "John Smith" ← original text
+    "next content..." ← contextAfter (60 chars)
+
+    Search Pattern:
+    "...previous content... Customer Name: John Smith next content..."
+    └─────────────────────────────────────────────────────────────┘
+                       search_pattern
+
+    Replacement:
+    "...previous content... Customer Name: [ALICE_JOHNSON] next content..."
+                                          ↑                ↑
+                                          Only this part is replaced
+
+╔════════════════════════════════════════════════════════════════════════════╗
+║ RESULT: Each field is replaced at the exact correct location with the     ║
+║         correct random value, regardless of how many times it appears     ║
+║         in the document.                                                  ║
+╚════════════════════════════════════════════════════════════════════════════╝
